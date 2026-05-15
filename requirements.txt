@@ -33,6 +33,6 @@ cryptography>=46.0.6,<47.0
 
 # ─── dev ─────
 pytest>=9.0.3,<10.0  # CVE-2025-71176 fix (8.x not backported)
-pytest-cov>=5.0,<7.0
+pytest-cov>=7.1.0,<8.0
 # Python supply chain audit (doctrine: npm-supply-chain-3layer 同型 Layer)
 pip-audit>=2.7,<3.0
