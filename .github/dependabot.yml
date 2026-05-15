@@ -1,0 +1,36 @@
+# Dependabot — supply chain in-stock 定期点検 (doctrine: npm-supply-chain-3layer Python 版、 Layer 3 of 3)
+# Reference: internal-architecture/security/templates/npm-3guard/
+version: 2
+
+updates:
+  # Python deps (requirements*.txt 全件、 weekly check)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "deps"
+      - "supply-chain"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # GitHub Actions deps (workflow file 内 action version、 weekly check)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    labels:
+      - "deps"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

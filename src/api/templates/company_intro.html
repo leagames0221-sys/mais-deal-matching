@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-num">紹介リクエスト (企業 → 候補) · {{ profile_id }}</span>
+<h1>紹介リクエスト 承認</h1>
+
+<div class="pii-warning">
+  ⚠ <strong>候補者の個人情報 vault への access が発生しました</strong> — 本閲覧は監査ログに literal 記録されました (リクエスト元 = 企業 <code>{{ company_id }}</code>)。 本番運用では MAIS コンサルタントが両者の意向を確認・承認した後にのみ vault join が許可されます。
+</div>
+
+<div class="card">
+  <h3>後継候補 公開情報 (仮名加工)</h3>
+  <table>
+    <tr><th>業界</th><td>{{ op.industries | join("・") }}</td></tr>
+    <tr><th>役職希望</th><td>{{ op.preferred_role }}</td></tr>
+    <tr><th>企業規模希望</th><td>{{ op.preferred_capital_size }}</td></tr>
+    <tr><th>経営経験年数</th><td>{{ op.executive_years }} 年</td></tr>
+    <tr><th>スキル</th><td>{{ op.skills | join("・") }}</td></tr>
+    <tr><th>年代</th><td>{{ op.age_band }}</td></tr>
+    <tr><th>地域</th><td>{{ op.location_pref }}</td></tr>
+    <tr><th>投資家ネットワーク</th><td>{{ "あり" if op.investor_network else "なし" }}</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>🔓 候補者 個人情報 (MAIS コンサル向け full info、 vault 復号済)</h3>
+  <p class="muted">本セクションは PoC demo のため即時開示していますが、 本番運用では <strong>候補者本人の承認 + MAIS コンサル仲介</strong> 経由でのみ表示されます。</p>
+  <table>
+    <tr><th>氏名 (カナ)</th><td>{{ pii.name_kana }}</td></tr>
+    <tr><th>氏名 (フル)</th><td>{{ pii.name_full }}</td></tr>
+    <tr><th>email</th><td>{{ pii.email }}</td></tr>
+    <tr><th>電話</th><td>{{ pii.phone }}</td></tr>
+    <tr><th>詳細住所</th><td>{{ pii.address_full }}</td></tr>
+    <tr><th>生年月日</th><td>{{ pii.dob_exact }}</td></tr>
+    <tr><th>自己紹介 (raw)</th><td>{{ pii.raw_self_intro }}</td></tr>
+  </table>
+</div>
+
+<div class="card subtle">
+  <h3>この後の流れ (本番運用)</h3>
+  <ol>
+    <li>MAIS コンサルタントが両者の希望条件をヒアリング</li>
+    <li>初回面談セッティング (MAIS 同席、 オンライン / 対面)</li>
+    <li>条件合意後、 PMI 16 案件の実績ノウハウで承継プロセスをサポート</li>
+  </ol>
+</div>
+
+<div class="row">
+  <a href="/company/match" class="btn subtle">← マッチング一覧に戻る</a>
+  <a href="/audit-log" class="btn">監査ログを確認</a>
+</div>
+{% endblock %}

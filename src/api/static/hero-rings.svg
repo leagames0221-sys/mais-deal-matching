@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MAIS hero background — 年輪 (tree rings) brand symbol。
+  succession = 世代の連続 のメタファー。 center=(800,800) で SVG 右下角に置き、
+  CSS background-image で右下に offset して 「左上に広がる log 断面」 として描画。
+  stroke #c9a227 + opacity 0.32 baked in、 hero 上に低 visual weight で重なる。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
+  <defs>
+    <radialGradient id="ringFade" cx="100%" cy="100%" r="100%">
+      <stop offset="0%" stop-color="#c9a227" stop-opacity="0.42"/>
+      <stop offset="55%" stop-color="#c9a227" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#c9a227" stop-opacity="0.08"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" stroke="url(#ringFade)" stroke-linecap="round">
+    <!-- 年輪 18 本、 不均等間隔で organic feel (実年輪は気候で太さ可変) -->
+    <circle cx="800" cy="800" r="22"  stroke-width="1.6"/>
+    <circle cx="800" cy="800" r="48"  stroke-width="1.2"/>
+    <circle cx="800" cy="800" r="78"  stroke-width="1.4"/>
+    <circle cx="800" cy="800" r="108" stroke-width="1.1"/>
+    <circle cx="800" cy="800" r="140" stroke-width="1.3"/>
+    <circle cx="800" cy="800" r="172" stroke-width="0.9"/>
+    <circle cx="800" cy="800" r="206" stroke-width="1.2"/>
+    <circle cx="800" cy="800" r="240" stroke-width="1.0"/>
+    <circle cx="800" cy="800" r="276" stroke-width="1.3"/>
+    <circle cx="800" cy="800" r="312" stroke-width="0.9"/>
+    <circle cx="800" cy="800" r="350" stroke-width="1.1"/>
+    <circle cx="800" cy="800" r="388" stroke-width="0.8"/>
+    <circle cx="800" cy="800" r="426" stroke-width="1.0"/>
+    <circle cx="800" cy="800" r="464" stroke-width="0.7"/>
+    <circle cx="800" cy="800" r="504" stroke-width="0.9"/>
+    <circle cx="800" cy="800" r="546" stroke-width="0.7"/>
+    <circle cx="800" cy="800" r="590" stroke-width="0.8"/>
+    <circle cx="800" cy="800" r="636" stroke-width="0.6"/>
+    <circle cx="800" cy="800" r="684" stroke-width="0.7"/>
+    <circle cx="800" cy="800" r="736" stroke-width="0.5"/>
+    <circle cx="800" cy="800" r="790" stroke-width="0.6"/>
+  </g>
+</svg>

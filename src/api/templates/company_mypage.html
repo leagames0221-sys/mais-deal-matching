@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-num">企業マイページ · {{ company_id }}</span>
+<h1>貴社のプロフィール</h1>
+<p class="lead">
+  MAIS では貴社の機密情報を <strong>2 層分離</strong> で保管しています。
+  検索 AI が読むのは公開情報 (仮名加工) のみ、 社名 / 担当者連絡先 / 詳細住所 は暗号化 vault に隔離されます。
+</p>
+
+<div class="card">
+  <h3>公開情報 (仮名加工)</h3>
+  <p class="muted">マッチング AI が参照する範囲。 漏洩しても個人特定不能 = 個人情報保護法 2026 改正で報告義務 ZERO 範囲。</p>
+  <table>
+    <tr><th>業界</th><td>{{ op.industry }}</td></tr>
+    <tr><th>売上規模</th><td>{{ op.revenue_band }}</td></tr>
+    <tr><th>従業員数</th><td>{{ op.employee_count }} 名</td></tr>
+    <tr><th>地域</th><td>{{ op.location_pref }} (都道府県のみ)</td></tr>
+    <tr><th>創業者年代</th><td>{{ op.founder_age_band }}</td></tr>
+    <tr><th>後継要件</th><td>{{ op.successor_requirements | join("・") }}</td></tr>
+    <tr><th>技術資産</th><td>{{ op.technical_assets | join("・") }}</td></tr>
+    <tr><th>財務状況</th><td>{{ op.financial_health }}</td></tr>
+    <tr><th>企業概要</th><td>{{ op.redacted_description }}</td></tr>
+  </table>
+</div>
+
+{% if not pii %}
+<div class="card">
+  <h3>🔒 機密情報 vault (暗号化保管中)</h3>
+  <p class="muted">社名 / 担当者連絡先 / 詳細住所 / 生 description は <strong>AES 暗号化された vault</strong> に分離保管されています。 貴社で確認する場合は下記から一時 access、 全 access は監査ログに literal 記録されます。</p>
+  <a href="/company/mypage?show_pii=1" class="btn accent">機密情報を一時的に閲覧 (監査記録あり)</a>
+</div>
+{% else %}
+<div class="card">
+  <h3>🔓 機密情報 vault (一時表示中)</h3>
+  <div class="pii-warning">
+    ⚠ 本閲覧は監査ログに literal 記録されました。 本番運用では紹介承認 flow + RBAC 経由のみ access 可能となります。
+  </div>
+  <table>
+    <tr><th>社名</th><td>{{ pii.company_name }}</td></tr>
+    <tr><th>詳細住所</th><td>{{ pii.address_full }}</td></tr>
+    <tr><th>担当者</th><td>{{ pii.contact_person }}</td></tr>
+    <tr><th>担当 email</th><td>{{ pii.contact_email }}</td></tr>
+    <tr><th>担当電話</th><td>{{ pii.contact_phone }}</td></tr>
+    <tr><th>企業説明 (raw)</th><td>{{ pii.raw_description }}</td></tr>
+  </table>
+  <a href="/company/mypage" class="btn subtle">機密情報を隠す</a>
+</div>
+{% endif %}
+
+<div class="row" style="margin-top:var(--sp-4)">
+  <a href="/company/match" class="btn accent">マッチする後継候補を見る →</a>
+  <a href="/audit-log" class="btn subtle">監査ログを見る</a>
+</div>
+{% endblock %}

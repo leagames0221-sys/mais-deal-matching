@@ -1,0 +1,29 @@
+# mais-deal-matching Week 4 active stack (Week 1+2+3 + UI / vault / form layer)
+# user constraint 「無料 + クレカ不要」 順守、 重 deps (SQLCipher / Presidio / Authlib / fastapi-users)
+# は framework hook 確保で deferred、 PoC は軽量 OSS で同等機能達成
+
+# Week 1+2+3 継承
+faker>=25.0,<26.0
+python-dotenv>=1.0,<2.0
+pytest>=9.0.3,<10.0
+sentence-transformers>=5.4,<6.0
+transformers>=5.0,<6.0          # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
+faiss-cpu>=1.8,<2.0
+numpy>=1.26,<3.0
+rank_bm25>=0.2,<1.0
+
+# Week 4: UI + form (FastAPI 公式 stack、 全 de-facto)
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.0,<3.0
+jinja2>=3.1,<4.0
+python-multipart>=0.0.9,<1.0
+itsdangerous>=2.0,<3.0
+# FastAPI TestClient が要求 (starlette transitive)、 既存 sentence-transformers の transitive で
+# install 済の version range と整合
+httpx>=0.27,<1.0
+
+# Week 4: vault encryption at rest (SQLCipher 代替、 同等 AES、 Windows でも install 簡単)
+# PyCA 公式、 17M+ DL/月、 Apache-2.0、 green flag
+# bumped to 46.0.6+ for CVE-2026-26007 (HIGH, SECT subgroup attack) + CVE-2026-34073 (LOW, DNS constraint)
+cryptography>=46.0.6,<47.0

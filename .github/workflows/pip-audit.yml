@@ -1,0 +1,53 @@
+# pip-audit CI — supply chain attack 検出 (doctrine: npm-supply-chain-3layer Python 版、 Layer 2 of 3)
+# fail-on-high で CVE 検出時に CI 落とす、 PR / push / weekly schedule で 3 trigger
+name: pip-audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'requirements*.txt'
+      - '.github/workflows/pip-audit.yml'
+  pull_request:
+    paths:
+      - 'requirements*.txt'
+  schedule:
+    # 毎週月曜 00:00 UTC (= 09:00 JST) に走らせる、 weekly drift catch
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'pip-audit>=2.7,<3.0'
+
+      - name: Audit requirements-week1.txt (Week 1 active stack)
+        run: |
+          pip-audit --requirement requirements-week1.txt --strict
+        # --strict = vulnerability 検出時 exit code 1 で fail-on-high
+        # pip-audit は CI 上で transitive deps を一時 install して resolve、 OSV.dev に query
+
+      - name: Audit requirements.txt (full Week 1-4 active stack、 strict block 機能 active)
+        run: |
+          pip-audit --requirement requirements.txt --strict
+        # --strict = vulnerability 検出時 exit code 1 で literal fail-on-vulnerability
+        # 2026-05-13 訂正: 旧 「forward-looking informational only (continue-on-error: true)」 path は
+        # doctrine: client-no-recovery + doctrine: no-design-compromise literal 違反 (上場会社 受託で CVE 隠蔽)、
+        # cross-PJ template (internal-template/)
+        # の Layer 2 standard literal 順守へ訂正
