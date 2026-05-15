@@ -1,0 +1,16 @@
+# mais-deal-matching Week 2 active stack (Week 1 + embedding pipeline)
+# user audit + OK gate 経由 install、 doctrine: external-source-audit 順守
+
+# Week 1 (継続)
+faker>=25.0,<26.0
+python-dotenv>=1.0,<2.0
+pytest>=9.0.3,<10.0 # CVE-2025-71176 fix
+
+# Week 2 (embedding pipeline、 全 ★★★ green flag)
+# - sentence-transformers: HuggingFace 公式、 25M+ DL/月、 19k+ stars、 Apache-2.0
+# - faiss-cpu: Meta (Facebook) 公式 OSS、 MIT、 数十万 scale で host PC で動く
+# - numpy: de-facto 数値計算、 NumFOCUS sponsored、 BSD-3
+sentence-transformers>=5.4,<6.0
+transformers>=5.0,<6.0 # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
+faiss-cpu>=1.8,<2.0
+numpy>=1.26,<3.0

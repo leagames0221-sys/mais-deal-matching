@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-num">マイページ · {{ profile_id }}</span>
+<h1>あなたのプロフィール</h1>
+<p class="lead">
+  MAIS ではあなたの個人情報を <strong>2 層分離</strong> で保管しています。
+  検索 AI が読むのは公開情報 (仮名加工) のみ、 氏名 / 連絡先 / 詳細住所 は暗号化 vault に隔離されます。
+</p>
+
+<div class="card">
+  <h3>公開情報 (仮名加工)</h3>
+  <p class="muted">マッチング AI が参照する範囲。 漏洩しても個人特定不能 = 個人情報保護法 2026 改正で報告義務 ZERO 範囲。</p>
+  <table>
+    <tr><th>業界</th><td>{{ op.industries | join("・") }}</td></tr>
+    <tr><th>役職希望</th><td>{{ op.preferred_role }}</td></tr>
+    <tr><th>企業規模希望</th><td>{{ op.preferred_capital_size }}</td></tr>
+    <tr><th>経営経験年数</th><td>{{ op.executive_years }} 年</td></tr>
+    <tr><th>スキル</th><td>{{ op.skills | join("・") }}</td></tr>
+    <tr><th>年代</th><td>{{ op.age_band }}</td></tr>
+    <tr><th>地域</th><td>{{ op.location_pref }} (都道府県のみ)</td></tr>
+    <tr><th>投資家ネットワーク</th><td>{{ "あり" if op.investor_network else "なし" }}</td></tr>
+    <tr><th>自己紹介</th><td>{{ op.redacted_self_intro }}</td></tr>
+  </table>
+</div>
+
+{% if not pii %}
+<div class="card">
+  <h3>🔒 個人情報 vault (暗号化保管中)</h3>
+  <p class="muted">氏名 / 連絡先 / 詳細住所 / 生年月日 は <strong>AES 暗号化された vault</strong> に分離保管されています。 ご自身で確認する場合は下記から一時 access、 全 access は監査ログに literal 記録されます。</p>
+  <a href="/mypage?show_pii=1" class="btn accent">個人情報を一時的に閲覧 (監査記録あり)</a>
+</div>
+{% else %}
+<div class="card">
+  <h3>🔓 個人情報 vault (一時表示中)</h3>
+  <div class="pii-warning">
+    ⚠ 本閲覧は監査ログに literal 記録されました。 本番運用では紹介承認 flow + RBAC 経由のみ access 可能となります。
+  </div>
+  <table>
+    <tr><th>氏名 (カナ)</th><td>{{ pii.name_kana }}</td></tr>
+    <tr><th>氏名 (フル)</th><td>{{ pii.name_full }}</td></tr>
+    <tr><th>email</th><td>{{ pii.email }}</td></tr>
+    <tr><th>電話</th><td>{{ pii.phone }}</td></tr>
+    <tr><th>詳細住所</th><td>{{ pii.address_full }}</td></tr>
+    <tr><th>生年月日</th><td>{{ pii.dob_exact }}</td></tr>
+    <tr><th>自己紹介 (raw)</th><td>{{ pii.raw_self_intro }}</td></tr>
+  </table>
+  <a href="/mypage" class="btn subtle">個人情報を隠す</a>
+</div>
+{% endif %}
+
+<div class="row" style="margin-top:var(--sp-4)">
+  <a href="/match" class="btn accent">マッチング企業を見る →</a>
+  <a href="/audit-log" class="btn subtle">監査ログを見る</a>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+# ─── credentials / secrets (Security Master Layer 1) ─────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+secrets.json
+.anthropic
+.claude_credentials
+
+# ─── Python ─────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ─── data (本物 / 合成いずれも repo 外保管が default) ─────
+data/synthetic/*.jsonl
+data/synthetic/*.parquet
+data/cache/
+data/vault/
+data/audit/
+!data/synthetic/.gitkeep
+!data/cache/.gitkeep
+
+# ─── embedding model cache ─────
+models/
+*.bin
+*.safetensors
+*.gguf
+
+# ─── 動画 pipeline 出力 (MP4 / WebM / WAV、 repo 外保管 default) ─────
+out_video/
+*.mp4
+*.webm
+*.wav
+
+# ─── Third-party engine binaries (per-host install、 大容量) ─────
+# 例: .vendor/aivis-engine/ = TTS engine-Engine 1.2.0 standalone (~216MB)
+.vendor/
+
+# ─── IDE / OS ─────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ─── log ─────
+*.log
+logs/
+
+# ─── Security Master telemetry (per-PJ jsonl + heartbeat) ─────
+internal/.security_telemetry.jsonl
+internal/.security_intercept.heartbeat
+internal/.git_secret_scan.heartbeat
+internal/.pre_commit_scan.heartbeat
+internal/.secret_file_guard.heartbeat

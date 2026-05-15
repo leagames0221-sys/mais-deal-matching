@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* landing-specific styles (gold/black luxury B2B、 BATONZ/TRANBI 型 service top) */
+/* hero に MAIS brand 年輪 (tree rings) 背景画像 — succession = 世代の連続 のメタファー */
+.hero{position:relative;padding:var(--sp-6) 0 var(--sp-6);text-align:center;border-bottom:1px solid var(--c-line);margin-bottom:var(--sp-5);background:radial-gradient(ellipse at top,rgba(212,175,55,.05) 0%,transparent 60%), url('/static/hero-rings.svg') no-repeat;background-position:top center, right -8% bottom -20%;background-size:auto, min(640px,55vw)}
+.hero .kicker{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--c-gold-dim);letter-spacing:var(--ls-wide);text-transform:uppercase;margin-bottom:var(--sp-3);padding:4px 14px;border:1px solid var(--c-gold);border-radius:2px;background:rgba(212,175,55,.04)}
+.hero h1{font-family:'Noto Serif JP',serif;font-size:3.4rem;line-height:1.25;letter-spacing:-0.02em;margin-bottom:var(--sp-4);border-bottom:none;padding-bottom:0;color:var(--c-ink)}
+.hero h1 .gold{color:var(--c-gold);font-style:italic}
+.hero-lead{font-size:var(--fs-md);color:var(--c-text);max-width:36rem;margin:0 auto var(--sp-5);line-height:1.9}
+.hero-cta{display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap}
+.hero-cta .btn{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-base);font-weight:600}
+
+.trust-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-3);padding:var(--sp-4);margin-bottom:var(--sp-6);background:var(--c-ink);color:var(--c-gold-bright);border-radius:4px;border:1px solid var(--c-gold-dim)}
+.trust-bar .stat{text-align:center;padding:var(--sp-2)}
+.trust-bar .num{font-family:'Noto Serif JP',serif;font-size:var(--fs-2xl);font-weight:700;color:var(--c-gold-bright);line-height:1.1}
+.trust-bar .num sup{font-size:0.5em;color:var(--c-gold)}
+.trust-bar .lbl{font-size:var(--fs-xs);color:#c9b88a;letter-spacing:var(--ls-wide);margin-top:var(--sp-1);text-transform:uppercase}
+
+.section-head{text-align:center;margin-bottom:var(--sp-5)}
+.section-head h2{font-size:var(--fs-2xl);margin:0 0 var(--sp-2);position:relative;display:inline-block;padding:0 var(--sp-4)}
+.section-head h2::before,.section-head h2::after{content:"";position:absolute;top:50%;width:24px;height:1px;background:var(--c-gold)}
+.section-head h2::before{left:-8px}.section-head h2::after{right:-8px}
+.section-head .sub{font-size:var(--fs-sm);color:var(--c-text-soft);letter-spacing:var(--ls-wide);text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);margin-bottom:var(--sp-6)}
+.step{position:relative;padding:var(--sp-4);background:#fff;border:1px solid var(--c-line);border-top:3px solid var(--c-gold);border-radius:4px}
+.step .step-num{font-family:'Noto Serif JP',serif;font-size:2.4rem;color:var(--c-gold);font-weight:700;display:block;line-height:1;margin-bottom:var(--sp-2)}
+.step h3{font-size:var(--fs-lg);margin:0 0 var(--sp-2);border:none;padding:0;color:var(--c-ink)}
+.step p{color:var(--c-text);margin:0;font-size:var(--fs-sm);line-height:1.8}
+
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-6)}
+.feature{padding:var(--sp-4);background:#fff;border:1px solid var(--c-line);border-radius:4px;transition:all .2s}
+.feature:hover{border-color:var(--c-gold);box-shadow:0 4px 20px rgba(201,162,39,.12)}
+.feature .icon-gold{display:inline-block;font-size:1.4rem;color:var(--c-gold);margin-right:var(--sp-2)}
+.feature h3{display:inline;border:none;padding:0;font-size:var(--fs-lg);margin:0;color:var(--c-ink)}
+.feature p{margin-top:var(--sp-2);color:var(--c-text);font-size:var(--fs-sm);line-height:1.8}
+
+.usecase-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-6)}
+.usecase-grid .card{border-top:3px solid var(--c-ink);background:#fff}
+.usecase-grid .card h3{border:none;padding:0;margin-top:0;color:var(--c-ink);font-family:'Noto Serif JP',serif}
+.usecase-grid .card ul{margin-top:var(--sp-2);padding-left:var(--sp-3)}
+.usecase-grid .card li{color:var(--c-text);font-size:var(--fs-sm);line-height:1.8;margin-bottom:4px}
+
+.cta-section{text-align:center;padding:var(--sp-6) var(--sp-4);background:linear-gradient(135deg,var(--c-ink) 0%,#1a1a1a 100%);color:#faf7ee;border-radius:6px;margin-bottom:var(--sp-6);border:1px solid var(--c-gold-dim)}
+.cta-section h2{color:var(--c-gold-bright);font-family:'Noto Serif JP',serif;font-size:var(--fs-2xl);margin:0 0 var(--sp-3)}
+.cta-section p{color:#e8dcc0;max-width:32rem;margin:0 auto var(--sp-4)}
+
+.demo-section{padding-top:var(--sp-5);border-top:2px solid var(--c-gold);margin-top:var(--sp-6)}
+.demo-section .badge-demo{display:inline-block;padding:3px 10px;background:var(--c-gold);color:var(--c-ink);font-size:var(--fs-xs);letter-spacing:var(--ls-wide);text-transform:uppercase;border-radius:2px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:var(--sp-2)}
+
+@media(max-width:768px){
+  .hero h1{font-size:2.2rem}
+  .trust-bar{grid-template-columns:repeat(2,1fr)}
+  .steps,.features,.usecase-grid{grid-template-columns:1fr}
+}
+</style>
+
+<!-- HERO (背景画像 = /static/hero-rings.svg、 MAIS brand 年輪 motif) -->
+<section class="hero">
+  <span class="kicker">MAIS — 事業承継マッチングプラットフォーム</span>
+  <h1>経営の責務を、<br>次の<span class="gold">「人」</span>へ。</h1>
+  <p class="hero-lead">
+    経営経験のあるプロフェッショナルと、 後継不在の中堅企業を、 5-stage hybrid AI で結ぶ。
+    隠れた候補も見逃さず、 貴社の未来を継ぐ人を、 MAIS が責任をもってご紹介します。
+  </p>
+  <div class="hero-cta">
+    <a href="#demo-profile" class="btn accent">後継候補として登録</a>
+    <a href="#demo-company" class="btn">企業として登録</a>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<section class="trust-bar">
+  <div class="stat"><div class="num">1,200<sup>+</sup></div><div class="lbl">登録プロフェッショナル<sup>※</sup></div></div>
+  <div class="stat"><div class="num">5</div><div class="lbl">stage hybrid pipeline</div></div>
+  <div class="stat"><div class="num">7</div><div class="lbl">layer security 設計</div></div>
+  <div class="stat"><div class="num">0</div><div class="lbl">漏洩報告義務 (法適合 path)</div></div>
+</section>
+
+<!-- 3-STEP FLOW -->
+<section>
+  <div class="section-head">
+    <div class="sub">How it works</div>
+    <h2>3 ステップで、 最適な後継候補と出会う</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">01</span>
+      <h3>会員登録</h3>
+      <p>Google / LinkedIn 認証で 1 分で登録。 プロフィールはマイページで自己編集、 いつでも更新可能。 公開範囲も自分で制御できます。</p>
+    </div>
+    <div class="step">
+      <span class="step-num">02</span>
+      <h3>AI が候補を surface</h3>
+      <p>BM25 + dense embedding + cross-encoder + LLM listwise rerank の 5-stage で、 業界 / 地域 / 経験を多角的に評価し fit 理由付きで提示。</p>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <h3>MAIS コンサルが紹介</h3>
+      <p>マッチング後、 MAIS の M&A / 事業承継コンサル (16 案件 PMI 実績) が両者の面談から成約後 PMI までを literal サポート。</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <div class="section-head">
+    <div class="sub">Why MAIS</div>
+    <h2>選ばれる 4 つの理由</h2>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <span class="icon-gold">◆</span>
+      <h3>業界特化の AI マッチング</h3>
+      <p>食品製造 ↔ 食品製造のような exact match から、 「経営経験なし but 業界エキスパート + 投資家連携」 のような cross-domain な隠れ候補まで、 5-stage hybrid で literal 拾い上げます。</p>
+    </div>
+    <div class="feature">
+      <span class="icon-gold">◆</span>
+      <h3>PII Vault による徹底した個人情報保護</h3>
+      <p>氏名 / 連絡先 / 詳細住所は AES 暗号化 vault に分離保管。 検索 AI は仮名加工情報のみ literal 読込、 漏洩リスクを構造的に最小化します。</p>
+    </div>
+    <div class="feature">
+      <span class="icon-gold">◆</span>
+      <h3>個人情報保護法 2026 改正に literal 適合</h3>
+      <p>「暗号化 + 仮名加工情報 = 漏洩報告義務 ZERO」 の最新方針に対応。 上場企業 / 法人 client が安心して使える architecture を foundation で literal 確保。</p>
+    </div>
+    <div class="feature">
+      <span class="icon-gold">◆</span>
+      <h3>全アクセス監査ログ</h3>
+      <p>vault への全 PII access を append-only で literal 記録。 透明性と内部統制を両立、 誰がいつ何を閲覧したか追跡可能です。</p>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section>
+  <div class="section-head">
+    <div class="sub">Who it's for</div>
+    <h2>こんな企業 / 候補にお勧めです</h2>
+  </div>
+  <div class="usecase-grid">
+    <div class="card">
+      <h3>後継不在の中堅企業</h3>
+      <ul>
+        <li>創業者 60-70 代、 後継者候補不在</li>
+        <li>売上 10-100 億円規模、 黒字経営</li>
+        <li>業界知見 + 投資家ネットワーク 兼備の経営者を望む</li>
+        <li>M&A 売却ではなく 「経営承継」 を選びたい</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>セカンドキャリアを探す経営者</h3>
+      <ul>
+        <li>大手 / 上場で経営 / 役員経験 10 年以上</li>
+        <li>業界エキスパート + 投資家ネットワーク保有</li>
+        <li>中堅企業で 「最後の挑戦」 を望む</li>
+        <li>創業者の理念を継ぎながら成長を加速したい</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>「経営の責務」 を、 次の人へ。</h2>
+  <p>MAIS の登録は無料、 1 分で完了します。 マッチングの先には MAIS の M&A / PMI 実績 16 案件の literal サポートが控えます。</p>
+  <div class="hero-cta">
+    <a href="#demo-profile" class="btn accent">後継候補として登録</a>
+    <a href="#demo-company" class="btn" style="background:transparent;color:var(--c-gold-bright);border-color:var(--c-gold-bright)">企業として登録</a>
+  </div>
+</section>
+
+<!-- DEMO SECTION -->
+<section id="demo" class="demo-section">
+  <span class="badge-demo">PoC Demo · 試作</span>
+  <h2 style="font-family:'Noto Serif JP',serif">実際に AI マッチングを試す</h2>
+  <p class="muted">
+    本サイトは MAIS (M&A advisory engagement 提案 T1 application) の試作版です。 後継候補 / 企業 の両側でログインすれば、
+    5-stage hybrid マッチング・ PII vault・ 監査ログを literal 実機で体験できます。
+  </p>
+  <p class="muted">
+    Provider 配線状態: Google {{ "✅" if providers.google else "⏸ (本番で active)" }} / LinkedIn {{ "✅" if providers.linkedin else "⏸ (本番で active)" }}
+  </p>
+
+  <div class="card" id="demo-profile">
+    <h3>① 後継候補として signin (合成 profile から選択)</h3>
+    <p class="muted">経営経験のあるプロフェッショナルとしてログイン。 マイページ + 自分にマッチする企業の AI 提示を試せます。</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>profile_id</th><th>業界</th><th>年代</th><th>地域</th><th>経営年数</th><th></th></tr></thead>
+      <tbody>
+      {% for p in samples %}
+        <tr>
+          <td><code>{{ p.profile_id }}</code></td>
+          <td>{{ p.industries | join("・") }}</td>
+          <td>{{ p.age_band }}</td>
+          <td>{{ p.location_pref }}</td>
+          <td>{{ p.executive_years }} 年</td>
+          <td>
+            <form action="/mock-signin" method="post" class="inline">
+              <input type="hidden" name="profile_id" value="{{ p.profile_id }}">
+              <button class="btn subtle">signin</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card" id="demo-company">
+    <h3>② 企業として signin (合成 company から選択)</h3>
+    <p class="muted">後継不在の中堅企業としてログイン。 自社マイページ + 貴社にマッチする後継候補の AI 提示を試せます。</p>
+
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>company_id</th><th>業界</th><th>売上</th><th>地域</th><th>創業者年代</th><th></th></tr></thead>
+      <tbody>
+      {% for c in company_samples %}
+        <tr>
+          <td><code>{{ c.company_id }}</code></td>
+          <td>{{ c.industry }}</td>
+          <td>{{ c.revenue_band }}</td>
+          <td>{{ c.location_pref }}</td>
+          <td>{{ c.founder_age_band }}</td>
+          <td>
+            <form action="/mock-signin-company" method="post" class="inline">
+              <input type="hidden" name="company_id" value="{{ c.company_id }}">
+              <button class="btn subtle">signin</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="note">
+    本 demo の全 mock-signin は <code>data/audit/access_log.jsonl</code> に literal 記録されます。
+    「監査ログ」 メニューから確認可能。
+  </div>
+
+  <p class="muted" style="margin-top:var(--sp-4);font-size:var(--fs-xs)">
+    <sup>※</sup> 数値は PoC 試作段階の合成データ件数。 本番運用時は C&R 41 万 professional + 5 万社 client の real scale (移植 phase)。
+  </p>
+</section>
+{% endblock %}

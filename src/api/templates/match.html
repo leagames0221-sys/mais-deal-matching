@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-num">マッチング · {{ profile_id }}</span>
+<h1>あなたにマッチする企業 top-{{ results | length }}</h1>
+<p class="lead">
+  MAIS の 5-stage AI が、 業界 / 地域 / 経営経験 / スキルを多角的に評価。
+  fit 理由付き で literal 提示します。
+</p>
+
+<div class="note">
+  本マッチング結果は <strong>あなたの公開情報 (仮名加工) のみを query として使用</strong> しており、 個人情報 vault は一切 touch していません。
+</div>
+
+{% for r in results %}
+<div class="card match">
+  <div class="row" style="justify-content:space-between;margin-bottom:var(--sp-2)">
+    <div>
+      <strong>{{ loop.index }}. {{ r.company_id }}</strong>
+      <span class="muted">{{ r.industry }} / {{ r.revenue_band }} / {{ r.location_pref }} / 創業者 {{ r.founder_age_band }}</span>
+    </div>
+    <div>
+      <span class="fit-badge fit-{{ r.fit_label }}">fit: {{ r.fit_label }}</span>
+    </div>
+  </div>
+  <div style="font-size:var(--fs-sm);color:var(--c-text);margin:var(--sp-2) 0">
+    💡 <strong>AI 判定理由</strong>: {{ r.reasoning }}
+  </div>
+  <form action="/intro/{{ r.company_id }}" method="post" class="inline">
+    <button class="btn accent">紹介をリクエスト (MAIS コンサルへ連携)</button>
+  </form>
+</div>
+{% endfor %}
+
+<div class="card subtle">
+  <h3>AI 判定ロジック (透明性のために公開)</h3>
+  <p class="muted">MAIS は 「ブラックボックス AI」 ではなく、 全 stage を literal 開示しています。 法人 client が監査・承認できる architecture です。</p>
+  <ol>
+    <li><strong>Stage 1 — 字面マッチング (BM25)</strong>: 業界名・スキル名・地域名の exact 一致を強化、 上位 50 候補を抽出</li>
+    <li><strong>Stage 2 — 意味マッチング (dense embedding)</strong>: 多言語対応 1024 次元 embedding で semantic 類似 上位 50 候補</li>
+    <li><strong>Stage 3 — Rank Fusion</strong>: 字面 と 意味 の 2 軸を統合、 上位 25 候補に絞り込み</li>
+    <li><strong>Stage 4 — 精密 rerank (cross-encoder)</strong>: query × 候補 を pair-wise で精査、 上位 15 に</li>
+    <li><strong>Stage 5 — LLM listwise rerank</strong>: Chain-of-Thought で 「なぜ fit か」 の理由を literal 生成、 最終 top-K を提示</li>
+  </ol>
+  <p class="muted" style="margin-top:var(--sp-3);font-size:var(--fs-xs)">
+    技術参照: (5-stage hybrid pipeline、 Amazon ESCI benchmark +22.5% NDCG@10) · MDPI 2024 Resume-Job Matching (zero-shot 87% accuracy 実証)。
+  </p>
+</div>
+{% endblock %}

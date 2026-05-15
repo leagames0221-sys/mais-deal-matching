@@ -1,0 +1,38 @@
+# mais-deal-matching deps (Week 1-4 試作)
+# pin は minor major で、 patch は flexible (security update 受け入れ)
+
+# ─── Week 1: 合成データ ─────
+faker>=25.0,<26.0
+python-dotenv>=1.0,<2.0
+
+# ─── Week 2: embedding pipeline ─────
+# multilingual-e5-large は HuggingFace から DL
+# cross-PJ python-ml-stack template Standard Pin literal inherit (T2 起源、 CVE-2026-1839 fix 込み)
+sentence-transformers>=5.4,<6.0
+transformers>=5.0,<6.0 # Standard Pin、 sentence-transformers transitive で 4.x 残存防止
+# in-memory similarity search、 数十万件まで host PC で扱える
+faiss-cpu>=1.8,<2.0
+# 数値計算
+numpy>=1.26,<3.0
+
+# ─── Week 3: matching engine ─────
+anthropic>=0.40,<1.0
+tenacity>=8.0,<10.0
+
+# ─── Week 4: API + UI + vault ─────
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.0,<3.0
+jinja2>=3.1,<4.0
+python-multipart>=0.0.9,<1.0
+itsdangerous>=2.0,<3.0
+httpx>=0.27,<1.0
+rank_bm25>=0.2,<1.0
+# vault encryption at rest、 46.0.6+ pin for CVE-2026-26007 (HIGH) + CVE-2026-34073 (LOW)
+cryptography>=46.0.6,<47.0
+
+# ─── dev ─────
+pytest>=9.0.3,<10.0 # CVE-2025-71176 fix (8.x not backported)
+pytest-cov>=5.0,<7.0
+# Python supply chain audit (doctrine: npm-supply-chain-3layer 同型 Layer)
+pip-audit>=2.7,<3.0
