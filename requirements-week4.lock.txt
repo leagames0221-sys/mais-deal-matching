@@ -16,7 +16,7 @@ defusedxml==0.7.1
 distro==1.9.0
 docstring_parser==0.18.0
 faiss-cpu==1.13.2
-Faker==25.9.2
+Faker==40.18.0
 fastapi==0.136.1
 filelock==3.29.0
 fsspec==2026.4.0

@@ -2,7 +2,7 @@
 # user audit + OK gate 経由 install、 doctrine: external-source-audit 順守
 
 # Week 1 (継続)
-faker>=25.0,<26.0
+faker>=40.18.0,<41.0
 python-dotenv>=1.0,<2.0
 pytest>=9.0.3,<10.0  # CVE-2025-71176 fix
 

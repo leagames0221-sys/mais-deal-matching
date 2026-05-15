@@ -2,7 +2,7 @@
 # pin は minor major で、 patch は flexible (security update 受け入れ)
 
 # ─── Week 1: 合成データ ─────
-faker>=25.0,<26.0
+faker>=40.18.0,<41.0
 python-dotenv>=1.0,<2.0
 
 # ─── Week 2: embedding pipeline ─────

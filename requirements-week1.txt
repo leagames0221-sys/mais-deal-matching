@@ -2,6 +2,6 @@
 # user audit + OK 取得済 (2026-05-12)、 doctrine: external-source-audit 順守
 # 全 3 件 green flag (MIT/BSD、 de-facto Python 標準、 CVE clean)
 
-faker>=25.0,<26.0
+faker>=40.18.0,<41.0
 python-dotenv>=1.0,<2.0
 pytest>=9.0.3,<10.0  # bumped for CVE-2025-71176 (8.x not patched)
