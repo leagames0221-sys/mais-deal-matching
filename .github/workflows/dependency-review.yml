@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Dependency Review (GitHub Native)
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           # CVE severity threshold = high (pip-audit と同 level integration)
           fail-on-severity: high
