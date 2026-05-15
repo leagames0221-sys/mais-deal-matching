@@ -65,7 +65,7 @@ python-multipart==0.0.28
 PyYAML==6.0.3
 rank-bm25==0.2.2
 regex==2026.5.9
-requests==2.34.0
+requests==2.34.2
 rich==15.0.0
 safetensors==0.7.0
 scikit-learn==1.8.0
