@@ -1,0 +1,18 @@
+# mais-deal-matching Week 3a active stack (Week 1+2 + BM25)
+# Week 3b (Stage 5 LLM listwise rerank) は anthropic SDK 追加時に別途 audit
+
+# Week 1+2 継承
+faker>=25.0,<26.0
+python-dotenv>=1.0,<2.0
+pytest>=9.0.3,<10.0
+sentence-transformers>=5.4,<6.0
+transformers>=5.0,<6.0          # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
+faiss-cpu>=1.8,<2.0
+numpy>=1.26,<3.0
+
+# Week 3a: Stage 1 BM25 (sparse lexical retrieval)
+# - rank_bm25: dorianbrown/rank_BM25、 Apache-2.0、 600+ stars、 pure Python (CVE 安全)
+rank_bm25>=0.2,<1.0
+
+# Stage 4 cross-encoder = sentence-transformers の CrossEncoder クラス、 既存 lib 利用、 新規 dep なし
+# Stage 5 LLM listwise rerank は Week 3b で別途 (anthropic SDK、 API key + 有料 = 別 user gate)

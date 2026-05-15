@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+markers = [
+    "slow: tests that require model download (sentence-transformers, ~数百 MB)",
+]
+# CI default では --strict-markers + slow を skip、 local dogfood で `pytest -m slow` で run
+addopts = "--strict-markers"

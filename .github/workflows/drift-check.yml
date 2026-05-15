@@ -1,0 +1,109 @@
+# drift-check CI — 実コード ↔ 情報 doc のずれ検出 (doctrine: drift-prevention)
+# README / internal knowledge base / decisionLog ADR と code 実態の同期を強制
+name: drift-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify internal knowledge base 5 file present
+        run: |
+          set -e
+          for f in productContext activeContext decisionLog systemPatterns logbook; do
+            test -f "(internal config)/internal_kb/${f}.md" || { echo "MISSING: (internal config)/internal_kb/${f}.md (doctrine: handoff-duty)"; exit 1; }
+          done
+          echo "[OK] internal knowledge base 5 file present"
+
+      - name: Verify CLAUDE.md (Tier 2) present
+        run: |
+          test -f "CLAUDE.md" || { echo "MISSING: CLAUDE.md (Tier 2)"; exit 1; }
+          echo "[OK] Tier 2 CLAUDE.md present"
+
+      - name: Verify requirements.txt aligned with requirements-week1.txt
+        run: |
+          # requirements-week1.txt の全 package が requirements.txt にも含まれているか
+          python -c "
+          import re, pathlib
+          full = pathlib.Path('requirements.txt').read_text(encoding='utf-8')
+          week1 = pathlib.Path('requirements-week1.txt').read_text(encoding='utf-8')
+          for line in week1.splitlines():
+              line = line.strip()
+              if not line or line.startswith('#'):
+                  continue
+              pkg = re.split(r'[<>=!~ ]', line)[0]
+              if pkg not in full:
+                  print(f'DRIFT: {pkg} in week1 but not in requirements.txt')
+                  exit(1)
+          print('[OK] requirements-week1.txt subset of requirements.txt')
+          "
+
+      - name: Verify README references existing files
+        run: |
+          # README 内の literal file path 参照が実在するか (最低限の link check)
+          python -c "
+          import re, pathlib
+          readme = pathlib.Path('README.md').read_text(encoding='utf-8')
+          # \`path\` 形式の python module ref を抽出
+          # 例: \`src/data_gen/generate_synthetic_profiles.py\`
+          for m in re.finditer(r'\`(src/[a-z_/]+\.py)\`', readme):
+              p = m.group(1)
+              if not pathlib.Path(p).exists():
+                  print(f'DRIFT: README references missing file: {p}')
+                  exit(1)
+          print('[OK] README file references valid')
+          "
+
+      - name: Verify embedding layer never imports vault (PII boundary check)
+        run: |
+          # ADR-006 + ADR-007 順守: embedding pipeline は vault を literal 読まない
+          python -c "
+          import pathlib
+          for f in pathlib.Path('src/embedding').rglob('*.py'):
+              src = f.read_text(encoding='utf-8')
+              for forbidden in ('src.vault', 'from src.vault', 'profiles_pii', 'companies_pii', 'raw_self_intro', 'raw_description', 'name_kana', 'address_full', 'contact_email', 'contact_phone', 'name_full'):
+                  if forbidden in src:
+                      print(f'PII BOUNDARY VIOLATION: {f} contains {forbidden!r} (ADR-006/007)')
+                      exit(1)
+          print('[OK] embedding layer has no vault / PII reference')
+          "
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Week 4 active stack deps (full PoC)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-week4.txt
+        # Week 1 のみだと test_matching.py (rank_bm25) / test_vault.py (cryptography)
+        # の module-level import が collect 段階で fail。 Week 4 active stack 全 install
+        # で CI も literal local と同等の verify を実行。
+
+      - name: Run pytest (skip slow = sentence-transformers / cross-encoder model DL 必要)
+        run: |
+          pytest tests/ -q -m "not slow"

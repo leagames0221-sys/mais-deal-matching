@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="section-num">監査ログ · 透明性レイヤー</span>
+<h1>個人情報 アクセス監査ログ</h1>
+<p class="lead">
+  MAIS では、 vault への <strong>全アクセス (read / write / signin / signout) を append-only 形式で literal 記録</strong> しています。
+  誰がいつ何を閲覧したか、 改ざん不能で literal 追跡可能。 直近 50 件を最新順で表示。
+</p>
+
+<div class="note">
+  本番運用では immutable storage + リアルタイム監視 + 異常検知 alarm に拡張、 RBAC で admin のみ閲覧可能となります。 PoC では透明性 demo のため全 user 閲覧可。
+</div>
+
+{% if not entries %}
+<div class="card subtle">
+  <p class="muted">ログ 0 件 (vault が初期化されていない可能性)。</p>
+</div>
+{% else %}
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>日時 (UTC)</th>
+        <th>action</th>
+        <th>item_id</th>
+        <th>requester</th>
+        <th>reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td><code style="font-size:.85em">{{ e.timestamp[:19] }}</code></td>
+        <td><strong>{{ e.action }}</strong></td>
+        <td><code>{{ e.item_id }}</code></td>
+        <td>{{ e.requester }}</td>
+        <td>{{ e.reason }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card subtle">
+  <h3>なぜ監査ログが重要か</h3>
+  <ul>
+    <li><strong>法令適合</strong>: 個人情報保護法 2026 改正方針 に基づく内部統制要件 (誰がいつ何にアクセスしたかの記録) を literal 充足</li>
+    <li><strong>insider 不正検知</strong>: 営業 / コンサル経由の不正 PII access を append-only で 即時 surface</li>
+    <li><strong>監査対応</strong>: 上場企業 client の J-SOX / SOC 2 監査でそのまま提出可能な evidence trail</li>
+    <li><strong>透明性</strong>: user 自身が 「自分のデータが誰に見られたか」 を literal 確認できる、 信頼の根拠</li>
+  </ul>
+</div>
+
+<div class="row" style="margin-top:var(--sp-4)">
+  <a href="/mypage" class="btn subtle">← マイページに戻る</a>
+  <a href="/match" class="btn">マッチング一覧へ</a>
+</div>
+{% endblock %}

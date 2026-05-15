@@ -1,0 +1,32 @@
+name: dependency-review
+
+# GitHub Native Dependency Review action (cross-PJ python-ml-stack template Layer 5、 T4 起源 inherit)
+# PR 時 dep tree 差分 literal verify、 既知 CVE 検出 + license check で literal block。
+# doctrine: npm-supply-chain-3layer Python 同型 (doctrine: python-supply-chain-5layer)、 Money Forward 2026-05 型 post-install runtime exfil
+# 防御の 「在庫定期点検 layer」 の literal 第二段 (pip-audit strict + Dependabot weekly に追加)。
+# 2026-05-13 install: cross-PJ template ((internal knowledge library)/agent-architecture/security/templates/python-ml-stack/) literal inherit
+
+on:
+  pull_request:
+    paths:
+      - "requirements*.txt"
+      - ".github/workflows/dependency-review.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Dependency Review (GitHub Native)
+        uses: actions/dependency-review-action@v4
+        with:
+          # CVE severity threshold = high (pip-audit と同 level integration)
+          fail-on-severity: high
+          # License check: GPL は要注意、 Apache-2.0 / MIT / BSD-3 / LGPL は OK
+          # (T1 採用 stack 全 compatible、 ADR-007 順守)
+          # allow-licenses は明示せず default permissive (受託 deploy 前 ★★★ gate で literal review)
+          comment-summary-in-pr: on-failure

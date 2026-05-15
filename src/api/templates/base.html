@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MAIS — 事業承継マッチング{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* MAIS corp luxury palette: 金 (gold) × 黒 (black)、 φ scale 維持 */
+  --fs-xs:0.764rem; --fs-sm:0.875rem; --fs-base:1rem; --fs-md:1.125rem;
+  --fs-lg:1.382rem; --fs-xl:1.618rem; --fs-2xl:2.618rem;
+  --sp-1:0.382rem; --sp-2:0.618rem; --sp-3:1rem; --sp-4:1.618rem;
+  --sp-5:2.618rem; --sp-6:4.236rem;
+  /* 黒 (ink layer)、 4 段階 */
+  --c-ink:#0a0a0a;       /* pure black、 header / footer / 主見出し */
+  --c-ink-soft:#1a1a1a;  /* deep charcoal、 table header / button hover */
+  --c-text:#2c2c2c;      /* 本文 */
+  --c-text-soft:#6b6b6b; /* muted */
+  /* 金 (gold accent layer)、 3 段階 */
+  --c-gold:#c9a227;      /* MAIS rich gold、 主 accent */
+  --c-gold-bright:#d4af37;/* metallic gold、 brand / hover */
+  --c-gold-soft:#f3e1a3; /* pale gold、 highlight bg */
+  --c-gold-dim:#8b7414;  /* dim gold、 border subtle */
+  /* base / line */
+  --c-line:#e5e0d0;      /* warm beige line */
+  --c-line-soft:#f3eee0; /* faint warm line */
+  --c-bg:#faf7ee;        /* cream paper bg */
+  --c-bg-card:#ffffff;
+  /* fit badge (金黒 trinity) */
+  --c-fit-high:#0a0a0a; --c-fit-high-bg:#d4af37;        /* gold = best fit */
+  --c-fit-medium:#5b4814; --c-fit-medium-bg:#f3e1a3;    /* pale gold */
+  --c-fit-low:#6b6b6b; --c-fit-low-bg:#ece9df;          /* neutral */
+  --lh-tight:1.3; --lh-snug:1.45; --lh-base:1.85;
+  --ls-tight:-0.025em; --ls-snug:-0.012em; --ls-base:0.02em; --ls-wide:0.08em;
+  --container:1024px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;font-size:var(--fs-base);line-height:var(--lh-base);color:var(--c-ink);background:var(--c-bg);letter-spacing:var(--ls-base);-webkit-font-smoothing:antialiased;font-feature-settings:"palt" 1}
+code,pre{font-family:'JetBrains Mono',monospace;font-size:.86em;color:var(--c-gold-dim);background:rgba(201,162,39,.06);padding:1px 5px;border-radius:3px}
+.container{max-width:var(--container);margin:0 auto;padding:0 var(--sp-4)}
+header{background:var(--c-ink);color:#faf7ee;padding:var(--sp-3) 0;border-bottom:2px solid var(--c-gold)}
+header .container{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3)}
+header .brand{font-family:'Noto Serif JP',serif;font-size:var(--fs-md);font-weight:700;letter-spacing:var(--ls-snug);color:var(--c-gold-bright);text-decoration:none}
+header .brand .sub{font-family:'Noto Sans JP',sans-serif;font-size:var(--fs-xs);color:#c9b88a;margin-left:var(--sp-2);font-weight:400;letter-spacing:var(--ls-wide)}
+header nav{display:flex;gap:var(--sp-3);align-items:center}
+header nav a, header nav form button{font-size:var(--fs-sm);color:#e8dcc0;text-decoration:none;background:none;border:none;cursor:pointer;font-family:inherit;padding:var(--sp-1) var(--sp-2);border-radius:3px;transition:all .2s;letter-spacing:var(--ls-base)}
+header nav a:hover, header nav form button:hover{color:var(--c-gold-bright);background:rgba(212,175,55,.08)}
+header nav form{margin:0}
+main{padding:var(--sp-5) 0 var(--sp-6)}
+h1{font-family:'Noto Serif JP',serif;font-size:var(--fs-2xl);font-weight:700;line-height:var(--lh-tight);letter-spacing:var(--ls-snug);margin-bottom:var(--sp-4);color:var(--c-ink);position:relative;padding-bottom:var(--sp-3);border-bottom:1px solid var(--c-gold)}
+h2{font-family:'Noto Serif JP',serif;font-size:var(--fs-xl);font-weight:700;line-height:var(--lh-tight);letter-spacing:var(--ls-snug);margin:var(--sp-5) 0 var(--sp-3);color:var(--c-ink)}
+h3{font-size:var(--fs-lg);font-weight:700;margin:var(--sp-4) 0 var(--sp-2);border-left:3px solid var(--c-gold);padding-left:var(--sp-3);color:var(--c-ink)}
+p{margin-bottom:var(--sp-3);color:var(--c-text);max-width:62rem}
+strong{color:var(--c-ink);font-weight:700}
+.lead{font-size:var(--fs-md);color:var(--c-text);max-width:48rem;margin-bottom:var(--sp-4)}
+.card{background:var(--c-bg-card);border:1px solid var(--c-line);border-radius:6px;padding:var(--sp-4);margin-bottom:var(--sp-3);box-shadow:0 1px 3px rgba(10,10,10,.04)}
+.card.subtle{background:#f8f4e8;border-color:var(--c-line-soft)}
+.card h3:first-child{margin-top:0}
+.card.match{border-left:3px solid var(--c-gold);transition:all .2s}
+.card.match:hover{box-shadow:0 4px 16px rgba(201,162,39,.18);transform:translateY(-1px)}
+.fit-badge{display:inline-block;padding:3px 12px;border-radius:3px;font-size:var(--fs-xs);font-weight:700;letter-spacing:var(--ls-wide);text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.fit-high{background:var(--c-fit-high-bg);color:var(--c-fit-high);box-shadow:0 0 0 1px var(--c-gold-dim) inset}
+.fit-medium{background:var(--c-fit-medium-bg);color:var(--c-fit-medium)}
+.fit-low{background:var(--c-fit-low-bg);color:var(--c-fit-low)}
+table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin:var(--sp-3) 0;background:#fff;border:1px solid var(--c-line);border-radius:4px;overflow:hidden}
+th{background:var(--c-ink);color:var(--c-gold-bright);text-align:left;padding:var(--sp-2) var(--sp-3);font-size:var(--fs-xs);letter-spacing:var(--ls-wide);text-transform:uppercase;font-weight:600}
+td{padding:var(--sp-2) var(--sp-3);border-top:1px solid var(--c-line-soft);color:var(--c-text);vertical-align:top}
+tr:nth-child(even) td{background:#faf7ee}
+td strong{color:var(--c-ink)}
+form.inline{display:inline}
+.btn{display:inline-block;padding:var(--sp-2) var(--sp-3);background:var(--c-ink);color:var(--c-gold-bright);text-decoration:none;border-radius:3px;font-size:var(--fs-sm);font-weight:500;border:1px solid var(--c-ink);cursor:pointer;font-family:inherit;letter-spacing:var(--ls-base);transition:all .2s}
+.btn:hover{background:var(--c-gold);color:var(--c-ink);border-color:var(--c-gold)}
+.btn.subtle{background:transparent;color:var(--c-text);border-color:var(--c-line)}
+.btn.subtle:hover{background:var(--c-gold-soft);color:var(--c-ink);border-color:var(--c-gold)}
+.btn.accent{background:var(--c-gold);color:var(--c-ink);border-color:var(--c-gold);font-weight:700}
+.btn.accent:hover{background:var(--c-gold-bright);border-color:var(--c-gold-bright)}
+.row{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap}
+.muted{color:var(--c-text-soft);font-size:var(--fs-sm)}
+.note{font-size:var(--fs-sm);color:var(--c-text-soft);padding:var(--sp-2) var(--sp-3);background:#f8f4e8;border-left:2px solid var(--c-gold);margin:var(--sp-3) 0;border-radius:0 3px 3px 0}
+.pii-warning{background:var(--c-gold-soft);color:#5b4814;border-left:3px solid var(--c-gold);padding:var(--sp-3);margin:var(--sp-3) 0;border-radius:0 3px 3px 0;font-size:var(--fs-sm)}
+.section-num{font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs);color:var(--c-gold-dim);letter-spacing:var(--ls-wide);text-transform:uppercase;margin-bottom:var(--sp-2);display:block;font-weight:600}
+ul,ol{padding-left:var(--sp-4);margin-bottom:var(--sp-3)}
+li{color:var(--c-text);margin-bottom:var(--sp-1)}
+li::marker{color:var(--c-gold)}
+footer{background:var(--c-ink);color:#c9b88a;padding:var(--sp-4) 0;margin-top:var(--sp-6);font-size:var(--fs-xs);border-top:2px solid var(--c-gold);letter-spacing:var(--ls-base)}
+footer code{background:rgba(212,175,55,.08);color:var(--c-gold-bright)}
+footer a{color:var(--c-gold-bright);text-decoration:none}
+footer a:hover{text-decoration:underline}
+@media(max-width:768px){h1{font-size:var(--fs-xl)}h2{font-size:var(--fs-lg)}.container{padding:0 var(--sp-3)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <a href="/" class="brand">MAIS <span class="sub">事業承継マッチング · PoC</span></a>
+    <nav>
+      {% if request.session.get("profile_id") %}
+        <a href="/mypage">マイページ</a>
+        <a href="/match">マッチング</a>
+        <a href="/audit-log">監査ログ</a>
+        <form action="/signout" method="post" class="inline"><button>ログアウト</button></form>
+      {% elif request.session.get("company_id") %}
+        <a href="/company/mypage">企業マイページ</a>
+        <a href="/company/match">候補者マッチング</a>
+        <a href="/audit-log">監査ログ</a>
+        <form action="/signout" method="post" class="inline"><button>ログアウト</button></form>
+      {% else %}
+        <a href="/">ホーム</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+<footer>
+  <div class="container">
+    <div><strong style="color:var(--c-gold-bright);font-family:'Noto Serif JP',serif">MAIS</strong> — 経営の責務を、 次の人へ。 / 後継候補 × プロフェッショナル マッチングプラットフォーム (PoC 試作版)</div>
+    <div style="margin-top:var(--sp-1)">合成データ only · PII / Operational 分離 (ADR-006) · 暗号化 vault (ADR-007) · 個人情報保護法 2026 改正適合</div>
+    <div style="margin-top:var(--sp-1);opacity:.7">© MAIS Corp. · original proposal: <code>mais_fde_aitools_proposal.html</code> · repo: <code>leagames0221-sys/mais-t1-matching</code> (PRIVATE)</div>
+  </div>
+</footer>
+</body>
+</html>
