@@ -16,7 +16,7 @@ faiss-cpu>=1.8,<2.0
 numpy>=1.26,<3.0
 
 # ─── Week 3: matching engine ─────
-anthropic>=0.40,<1.0
+anthropic>=0.102.0,<1.0
 tenacity>=8.0,<10.0
 
 # ─── Week 4: API + UI + vault ─────
