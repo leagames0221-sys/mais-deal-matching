@@ -15,8 +15,8 @@
 Japanese mid-market M&A intermediaries handle hundreds of thousands of candidate-side and buy-side records. Naive matching tools either (a) leak PII to embedding models, or (b) drop accuracy by stripping context.
 
 **MAIS Deal Matching** solves both:
-- **Retrieval quality** — 5-stage hybrid pipeline (BM25 + dense + RRF + cross-encoder + LLM listwise CoT rerank) — designed for Japanese-language sparse + dense complementarity
-- **PII compliance** — vault DB (SQLCipher) holds PII; only pseudonymized fields enter the embedding/matching path. Aligns with the 2026 amended APPI exemption (encrypted + pseudonymized → no breach reporting obligation)
+- **Retrieval quality** — 5-stage hybrid pipeline (BM25 + dense + RRF + cross-encoder + LLM listwise CoT rerank) — designed for Japanese-language sparse + dense complementarity *(Stages 1-4 active; Stage 5 LLM rerank uses MockProvider in PoC, Claude/Gemini swap is a 1-file change — see [PoC status](#poc-status-what-is-live-vs-deferred))*
+- **PII compliance** — vault holds PII; only pseudonymized fields enter the embedding/matching path. Aligns with the 2026 amended APPI exemption (encrypted + pseudonymized → no breach reporting obligation) *(PoC: Fernet AES-128-CBC + HMAC-SHA256 over JSONL files; production-equivalent SQLCipher / PostgreSQL + KMS swap path is literal in `src/vault/store.py`)*
 
 ---
 
@@ -28,7 +28,8 @@ Japanese mid-market M&A intermediaries handle hundreds of thousands of candidate
                  └──────────────┬──────────────┘
                                 │
                   ┌─────────────▼─────────────┐
-                  │  Vault DB (SQLCipher)     │  ← PII at rest, audit log append-only
+                  │  Vault (Fernet in PoC;    │  ← PII at rest, audit log append-only
+                  │   SQLCipher/KMS swap)     │
                   │  • name / contact / DoB   │
                   └─────────────┬─────────────┘
                                 │ (pseudonymize)
@@ -60,40 +61,42 @@ Japanese mid-market M&A intermediaries handle hundreds of thousands of candidate
 
 ## What's inside
 
-| Capability | Implementation |
-|---|---|
-| **5-stage hybrid retrieval** | BM25 (rank-bm25) + multilingual-e5-large dense + RRF (Reciprocal Rank Fusion) + cross-encoder/ms-marco-MiniLM-L-12-v2 rerank + Claude listwise CoT rerank |
-| **PII Vault Pattern** | SQLCipher-encrypted vault DB (name / contact / detailed address / DoB / raw text) + pseudonymized Operational DB (age band / region / industry / skills / Presidio-redacted text) |
-| **Audit trail** | All vault access logged append-only with timestamp + actor + purpose |
-| **Member portal** | Mock OAuth (Google/LinkedIn provider hooks) + temporary PII vault read with audit + introduction flow |
-| **LLM swap path** | LLMProvider Protocol (3 methods) — MockProvider (no API key required) ↔ ClaudeProvider ↔ Ollama |
-| **Brand UI** | FastAPI + Jinja2 + slate palette + golden-ratio (φ=1.618) typography scale |
+| Capability | Implementation | PoC status |
+|---|---|---|
+| **5-stage hybrid retrieval** | BM25 (rank-bm25) + multilingual-e5-large dense + RRF (Reciprocal Rank Fusion) + cross-encoder/ms-marco-MiniLM-L-12-v2 rerank + LLM listwise CoT rerank | Stages 1-4 ✅ active; Stage 5 ⏳ MockProvider returns templated CoT (no API key) |
+| **PII Vault Pattern** | Encrypted vault (PII: name / contact / detailed address / DoB / raw text) + pseudonymized Operational DB (age band / region / industry / skills / Presidio-redacted text) | ✅ active. PoC = Fernet AES-128-CBC + HMAC-SHA256 over JSONL files; SQLCipher / PostgreSQL + KMS swap is the production path (`src/vault/store.py` L2-4) |
+| **Audit trail** | All vault access logged append-only with timestamp + actor + purpose | ✅ active |
+| **Member portal** | Mock OAuth (Google/LinkedIn provider hooks) + temporary PII vault read with audit + introduction flow | ✅ active (mock OAuth hooks) |
+| **LLM swap path** | LLMProvider Protocol (`listwise_rerank` method) — MockProvider (no API key required) ↔ Claude / Gemini / Ollama swap | ⏳ Protocol + MockProvider live; ClaudeProvider class not yet present in `src/`. `anthropic>=0.40` declared in `requirements.txt` but no code imports it |
+| **Brand UI** | FastAPI + Jinja2 + slate palette + golden-ratio (φ=1.618) typography scale | ✅ active |
 
 ---
 
 ## Compliance angle
 
-Japan's 2024 PII breach incidents hit a 4-year high (189 listed companies). The 2026 APPI amendment introduces an exemption: **if PII is both encrypted and pseudonymized, there is no breach reporting obligation**. This codebase implements that exemption from day one:
+Japan's 2024 PII breach incidents hit a 4-year high (189 listed companies). The 2026 APPI amendment introduces an exemption: **if PII is both encrypted and pseudonymized, there is no breach reporting obligation**. This codebase implements the *shape* of that exemption from day one:
 
-- vault DB → encrypted at rest (SQLCipher AES-256)
+- vault → encrypted at rest. **PoC**: Fernet (AES-128-CBC + HMAC-SHA256). **Production swap**: SQLCipher (AES-256) or PostgreSQL + envelope key via KMS — `src/vault/store.py` documents the swap path.
 - operational DB → pseudonymized fields only (matching engine reads this)
 - if either is breached in isolation, the exemption applies
+
+The vault read-side enforcement (audit log + module boundary check preventing embedding/matching from importing `src/vault/*`) is active in PoC.
 
 ---
 
 ## Tech stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| Embedding | sentence-transformers / multilingual-e5-large | Strong Japanese + English performance, OSS |
-| ANN | FAISS in-memory | Handles hundreds of thousands of records on a laptop |
-| Sparse | rank-bm25 | Complements dense for Japanese term-heavy queries |
-| Cross-encoder | cross-encoder/ms-marco-MiniLM-L-12-v2 | Re-ranks top-100 from RRF fusion |
-| LLM | Anthropic SDK (Claude Sonnet 4.6) | listwise Chain-of-Thought rerank |
-| Web | FastAPI + uvicorn + Jinja2 | Standard Python web stack |
-| Vault | SQLCipher + cryptography (Fernet) | Encrypted-at-rest with key management |
-| PII redaction | Microsoft Presidio | Japanese + English NER for redaction |
-| Tests | pytest (50 collected: unit + integration) | TDD throughout |
+| Layer | Choice | Why | PoC wiring |
+|---|---|---|---|
+| Embedding | sentence-transformers / multilingual-e5-large | Strong Japanese + English performance, OSS | ✅ live |
+| ANN | FAISS in-memory | Handles hundreds of thousands of records on a laptop | ✅ live |
+| Sparse | rank-bm25 | Complements dense for Japanese term-heavy queries | ✅ live |
+| Cross-encoder | cross-encoder/ms-marco-MiniLM-L-12-v2 | Re-ranks top-100 from RRF fusion | ✅ live |
+| LLM | LLMProvider Protocol — MockProvider in PoC; Anthropic SDK / Gemini / Ollama swap | listwise Chain-of-Thought rerank (Stage 5) | ⏳ MockProvider active; `anthropic>=0.40` declared in `requirements.txt` but not imported. Stage 5 lands in Week 3b per `requirements-week3.txt` L2 |
+| Web | FastAPI + uvicorn + Jinja2 | Standard Python web stack | ✅ live |
+| Vault | Fernet (AES-128-CBC + HMAC-SHA256) in PoC; SQLCipher / PostgreSQL + KMS in production | Encrypted-at-rest with key management | ⏳ Fernet active; SQLCipher swap is `src/vault/store.py` L2-4 path |
+| PII redaction | Microsoft Presidio | Japanese + English NER for redaction | ✅ live |
+| Tests | pytest (50 collected: unit + integration) | TDD throughout | ✅ live (49/50 pass per badge) |
 
 ---
 
@@ -158,6 +161,26 @@ DATA_DIR=./data
 VAULT_KEY=<fernet key>
 SESSION_SECRET=<token_urlsafe>
 ```
+
+---
+
+## PoC status — what is live vs deferred
+
+This is a **PoC portfolio** demonstrating shape + interfaces. The architecture above is the target design. Current implementation status:
+
+**✅ Live in PoC** (active code paths, deterministic, no external API needed):
+- Stages 1-4 of the retrieval pipeline (BM25 + dense e5-large + RRF + cross-encoder rerank)
+- Fernet-encrypted vault + pseudonymized operational DB + append-only audit log
+- Mock OAuth provider hooks + temporary PII vault read flow
+- Microsoft Presidio JP/EN NER redaction
+- 49/50 pytest cases passing
+
+**⏳ Deferred to integration phase** (1-file swap paths defined, contracts stable):
+- **Stage 5 LLM listwise CoT rerank** — `MockProvider` returns templated `(fit_label, reasoning)` tuples. `src/matching/llm_provider.py` defines the `LLMProvider` Protocol with a single `listwise_rerank` method. `anthropic>=0.40` is declared in top-level `requirements.txt` but no code imports it. Week 3b adds ClaudeProvider per `requirements-week3.txt` L2.
+- **Vault → SQLCipher / KMS** — current vault is Fernet over JSONL files. `src/vault/store.py` L2-4 documents the production swap (SQLCipher / PostgreSQL + envelope key via KMS) as the migration target.
+- **Real OAuth + Bot Framework** — Google / LinkedIn provider hooks are mocked; real OAuth wiring deferred to integration phase.
+
+**Rationale**: this scoping lets the repo demonstrate end-to-end shape, the 2026 APPI vault pattern, and the 4-stage retrieval pipeline on a laptop without paid API keys. The Protocol-abstracted LLM swap and the documented vault migration path are themselves the portfolio claim — adding real Claude / SQLCipher does not require refactoring callers.
 
 ---
 
