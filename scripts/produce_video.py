@@ -1,20 +1,21 @@
-"""MAIS Deal Matching demo 動画 全自動制作 pipeline。
+"""MAIS Deal Matching demo 動画 全自動制作 pipeline (action-then-narration timing model)。
 
-3 段 orchestrator:
-  1. AivisSpeech HTTP API (Style-Bert-VITS2、 まお おちついた speaker_id=888753763) で 14 scene narration WAV
-  2. Playwright (Chromium、 1920x1080) で uvicorn live demo flow を navigate + WebM 録画
-  3. ffmpeg で WebM + narration WAV → MP4 最終合成 (lead/trail silence で接続部 重なり防止)
+4 段 orchestrator:
+  1. AivisSpeech HTTP API (Style-Bert-VITS2、 まお おちついた speaker_id=888753763) で 14 scene raw narration WAV 生成
+  2. Playwright (Chromium、 1920x1080) で uvicorn live demo flow を navigate + WebM 録画 + 各 scene action_elapsed 計測
+  3. action_elapsed + settle buffer を lead-in silence にして per-scene padded WAV build (narration が settled page 上で 流れる timing 保証)
+  4. ffmpeg で WebM + narration WAV → MP4 最終合成 (SRT 字幕 burn-in + 末尾 credit overlay + tpad で video 末尾 frame clone)
 
 precondition (起動済 / install 済 verify):
-  - uvicorn http://127.0.0.1:8000/health = 200
+  - uvicorn http://127.0.0.1:8001/health = 200
   - AivisSpeech engine http://127.0.0.1:10101/version = 200
-    起動例: `.vendor/aivis-engine/Windows-x64/run.exe --host 127.0.0.1 --port 10101`
+    起動: `.vendor/aivis-engine/Windows-x64/run.exe --host 127.0.0.1 --port 10101`
   - ffmpeg (PATH 上、 `winget install Gyan.FFmpeg`)
   - playwright + chromium (`pip install -r requirements-video.txt && playwright install chromium`)
 
 run:
   PYTHONIOENCODING=utf-8 python -m scripts.produce_video
-  → out_video/mais_deal_matching_demo.mp4 (約 85 秒、 1080p、 約 6-7 MB)
+  → out_video/mais_deal_matching_demo.mp4 (約 80 秒、 1080p、 約 6-7 MB)
 
 env var (override 可):
   SPEAKER_ID=<int>     default 888753763 (まお おちついた)
@@ -41,8 +42,9 @@ UVICORN_URL = "http://127.0.0.1:8001"
 ENGINE_URL = "http://127.0.0.1:10101"  # AivisSpeech-Engine standalone
 SPEAKER_ID = int(os.environ.get("SPEAKER_ID", "888753763"))  # まお おちついた (cross-PJ 統一)
 
-LEAD_IN_SEC = 0.4   # scene 開始から narration 開始までの silence
+LEAD_IN_SEC = 0.4   # legacy (--narration-only mode の fallback)
 TRAIL_OUT_SEC = 0.4  # narration 終了から次 scene までの最低 silence
+SETTLE_BUFFER_SEC = 0.3  # action 完了 (networkidle) 後 narration 開始 までの buffer (画面 settle 確保)
 
 # pitchScale: AivisSpeech (Style-Bert-VITS2) は ±0.03 が natural 域、 超過で音割れ artifact
 PITCH_SCALE = float(os.environ.get("PITCH_SCALE", "0.0"))
@@ -229,18 +231,23 @@ def ffprobe_duration(path: Path) -> float:
     return float(out.decode().strip())
 
 
-def make_padded_wav(scene: Scene, raw_wav_path: Path, out_path: Path) -> None:
-    """raw WAV を scene.duration に合わせて lead-in + trail-out silence で sandwich pad。"""
+def make_padded_wav(scene: Scene, raw_wav_path: Path, out_path: Path, lead_in_sec: float | None = None) -> None:
+    """raw WAV を scene.duration に合わせて lead-in + trail-out silence で sandwich pad。
+
+    lead_in_sec が None なら legacy LEAD_IN_SEC (0.4s) を使用 (--narration-only mode 等)。
+    full pipeline では action_elapsed + SETTLE_BUFFER_SEC を渡して action-then-narration 同期する。
+    """
+    lead = LEAD_IN_SEC if lead_in_sec is None else lead_in_sec
     raw_dur = ffprobe_duration(raw_wav_path)
-    if raw_dur > scene.duration - LEAD_IN_SEC - TRAIL_OUT_SEC:
-        info(f"  WARN [{scene.id}] narration {raw_dur:.2f}s が scene {scene.duration:.1f}s に対し tight、 trail_out 縮小")
+    if raw_dur > scene.duration - lead - TRAIL_OUT_SEC:
+        info(f"  WARN [{scene.id}] narration {raw_dur:.2f}s が scene {scene.duration:.1f}s (lead={lead:.2f}s) に対し tight、 trail_out 縮小")
 
     # adelay で先頭 silence、 apad で末尾 silence を scene.duration まで延長
     subprocess.run(
         [
             "ffmpeg", "-y", "-loglevel", "error",
             "-i", str(raw_wav_path),
-            "-af", f"adelay={int(LEAD_IN_SEC * 1000)}|{int(LEAD_IN_SEC * 1000)},apad=whole_dur={scene.duration}",
+            "-af", f"adelay={int(lead * 1000)}|{int(lead * 1000)},apad=whole_dur={scene.duration}",
             "-ar", "24000", "-ac", "1",
             str(out_path),
         ],
@@ -268,10 +275,22 @@ def concat_narration(scene_padded_wavs: list[Path], out_path: Path) -> None:
 
 
 def record_demo() -> Path:
-    """Playwright で demo flow を録画、 WebM path 返却。"""
+    """Playwright で action-then-narration model で demo flow 録画、 WebM path 返却。
+
+    各 scene で:
+      1. action() 実行 (page.goto / click / scroll 等)
+      2. wait_for_load_state('networkidle') で画面 settle 完了 待ち
+      3. scene.action_elapsed = wall-clock 計測値 (settled 状態到達まで)
+      4. narration_window = raw_duration + SETTLE_BUFFER_SEC + TRAIL_OUT_SEC を wait
+         → narration は settled page 上で 流れる
+      5. 次 scene へ
+
+    結果: video timeline = audio timeline (action_lead + narration_window per scene) が 1:1 一致、
+          narration が 該当 page 上で 流れる (timing drift 構造的解消)。
+    """
     from playwright.sync_api import sync_playwright
 
-    info("Playwright Chromium 起動中... (initial nav)")
+    info("Playwright Chromium 起動中... (action-then-narration timing mode)")
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
             headless=True,
@@ -285,13 +304,19 @@ def record_demo() -> Path:
         page = context.new_page()
 
         for scene in SCENES:
+            raw_dur = getattr(scene, "raw_duration", 0.0)
+            info(f"  [{scene.id}] action: {scene.narration[:30]}... (narration_raw={raw_dur:.2f}s)")
             t0 = time.time()
-            info(f"  [{scene.id}] {scene.narration[:30]}... (target {scene.duration}s)")
             scene.action(page)
-            # action 後の残時間を wait (action 自体に時間かかる場合は短縮)
-            elapsed = time.time() - t0
-            remaining = max(0.5, scene.duration - elapsed)
-            page.wait_for_timeout(int(remaining * 1000))
+            try:
+                page.wait_for_load_state("networkidle", timeout=10000)
+            except Exception:
+                # networkidle timeout (e.g., long-poll endpoints) → 既に動作可な state、 続行
+                pass
+            scene.action_elapsed = time.time() - t0
+            narration_window_sec = raw_dur + SETTLE_BUFFER_SEC + TRAIL_OUT_SEC
+            info(f"    action_elapsed={scene.action_elapsed:.2f}s, narration_window={narration_window_sec:.2f}s")
+            page.wait_for_timeout(int(narration_window_sec * 1000))
 
         context.close()  # video flush
         browser.close()
@@ -311,11 +336,19 @@ def _fmt_srt_time(t: float) -> str:
 
 
 def generate_srt(out_path: Path) -> None:
-    """14 scene narration を SRT 形式に literal 出力 (cumulative 時刻 + lead/trail silence 反映)。"""
+    """14 scene narration を SRT 形式に literal 出力。
+
+    action-then-narration model で scene.action_elapsed が set 済の場合:
+      lead = action_elapsed + SETTLE_BUFFER_SEC で start time 計算
+    set されてない場合 (--narration-only mode):
+      legacy LEAD_IN_SEC で計算
+    """
     lines: list[str] = []
     cum = 0.0
     for i, scene in enumerate(SCENES, 1):
-        start = cum + LEAD_IN_SEC
+        action_elapsed = getattr(scene, "action_elapsed", None)
+        lead = (action_elapsed + SETTLE_BUFFER_SEC) if action_elapsed is not None else LEAD_IN_SEC
+        start = cum + lead
         end = cum + scene.duration - TRAIL_OUT_SEC
         cum += scene.duration
         lines.append(f"{i}\n{_fmt_srt_time(start)} --> {_fmt_srt_time(end)}\n{scene.narration}\n")
@@ -338,7 +371,14 @@ def compose_final(webm: Path, narration: Path, out_mp4: Path) -> None:
     srt_escaped = srt_path.as_posix().replace(":", "\\:")
 
     narration_dur = ffprobe_duration(narration)
+    video_dur = ffprobe_duration(webm)
     enable_from = max(0.0, narration_dur - 7.0)
+
+    # tpad: video が narration より短い場合 (Playwright WebM 末尾 frame drop 等) 最終 frame を clone で extend。
+    # action-then-narration model で audio = action_lead + raw + trail per scene 累積 = 全 narration が
+    # cut なし re-play されるための video 長さ保証。
+    pad_sec = max(0.0, narration_dur - video_dur + 0.2)  # +0.2s buffer
+    tpad_filter = f"tpad=stop_mode=clone:stop_duration={pad_sec:.2f}" if pad_sec > 0.01 else None
 
     subtitles_filter = (
         f"subtitles='{srt_escaped}':"
@@ -357,7 +397,10 @@ def compose_final(webm: Path, narration: Path, out_mp4: Path) -> None:
         f"enable='gte(t,{enable_from:.2f})'"
     )
 
-    vf_chain = f"{subtitles_filter},{drawtext_filter}"
+    vf_parts = [f for f in (tpad_filter, subtitles_filter, drawtext_filter) if f]
+    vf_chain = ",".join(vf_parts)
+    if tpad_filter:
+        info(f"  tpad: video {video_dur:.2f}s → narration {narration_dur:.2f}s (clone {pad_sec:.2f}s 末尾 frame)")
 
     subprocess.run(
         [
@@ -379,7 +422,7 @@ def compose_final(webm: Path, narration: Path, out_mp4: Path) -> None:
 
 def main() -> int:
     narration_only = "--narration-only" in sys.argv
-    info("=== MAIS Deal Matching demo video pipeline ===")
+    info("=== MAIS Deal Matching demo video pipeline (action-then-narration model) ===")
     if narration_only:
         info("(--narration-only mode: AivisSpeech synthesis のみ実行、 Playwright + ffmpeg compose skip)")
     OUTPUT_DIR.mkdir(exist_ok=True)
@@ -401,50 +444,57 @@ def main() -> int:
     else:
         check_preconditions()
 
-    info(f"\n[1/3] AivisSpeech で {len(SCENES)} scene の narration WAV を生成 + auto-sync + pad")
-    # auto-sync: SCENES の hard-coded duration を actual narration WAV duration + margin に literal
-    # 自動上書き (cross-PJ universal sync rule、 SSoT § 2 video-pipeline/README.md)
-    AUTO_SYNC_MARGIN_SEC = 0.3
+    info(f"\n[1/4] AivisSpeech で {len(SCENES)} scene の raw narration WAV 生成 (padding は phase 3 で)")
+    for scene in SCENES:
+        raw = TEMP_DIR / f"{scene.id}_raw.wav"
+        wav_bytes = aivis_synthesize(scene.narration)
+        raw.write_bytes(wav_bytes)
+        scene.raw_duration = ffprobe_duration(raw)
+        info(f"  [{scene.id}] raw_duration={scene.raw_duration:.2f}s ({scene.narration[:25]}...)")
+
+    if narration_only:
+        info("\n[narration-only fallback] padded WAV を legacy fixed lead で build")
+        padded_wavs: list[Path] = []
+        for scene in SCENES:
+            raw = TEMP_DIR / f"{scene.id}_raw.wav"
+            padded = TEMP_DIR / f"{scene.id}_padded.wav"
+            scene.duration = round(scene.raw_duration + LEAD_IN_SEC + TRAIL_OUT_SEC + 0.3, 1)
+            make_padded_wav(scene, raw, padded)
+            padded_wavs.append(padded)
+        narration_wav = TEMP_DIR / "narration_full.wav"
+        concat_narration(padded_wavs, narration_wav)
+        listen_path = OUTPUT_DIR / "narration_only_preview.wav"
+        shutil.copy(narration_wav, listen_path)
+        total_audio = ffprobe_duration(narration_wav)
+        info(f"\n=== --narration-only Done ===")
+        info(f"  preview WAV: {listen_path.relative_to(BASE_DIR)} ({total_audio:.2f}s)")
+        return 0
+
+    info(f"\n[2/4] Playwright で demo flow 録画 (action-then-narration model、 scene.action_elapsed 計測)")
+    webm = record_demo()
+    video_dur = ffprobe_duration(webm)
+    info(f"  WebM: {webm.name} = {video_dur:.2f}s")
+    info(f"  action_elapsed per scene (settled state 到達 wall-clock):")
+    for scene in SCENES:
+        info(f"    [{scene.id}] action_elapsed={scene.action_elapsed:.2f}s")
+
+    info(f"\n[3/4] padded WAV build (lead_in = action_elapsed + {SETTLE_BUFFER_SEC}s settle buffer)")
     padded_wavs: list[Path] = []
-    sync_adjustments: list[tuple[str, float, float]] = []
     for scene in SCENES:
         raw = TEMP_DIR / f"{scene.id}_raw.wav"
         padded = TEMP_DIR / f"{scene.id}_padded.wav"
-        wav_bytes = aivis_synthesize(scene.narration)
-        raw.write_bytes(wav_bytes)
-        actual_raw = ffprobe_duration(raw)
-        required = actual_raw + LEAD_IN_SEC + TRAIL_OUT_SEC + AUTO_SYNC_MARGIN_SEC
-        if required > scene.duration:
-            old_dur = scene.duration
-            scene.duration = round(required, 1)
-            sync_adjustments.append((scene.id, old_dur, scene.duration))
-        make_padded_wav(scene, raw, padded)
+        lead = scene.action_elapsed + SETTLE_BUFFER_SEC
+        scene.duration = round(lead + scene.raw_duration + TRAIL_OUT_SEC, 2)
+        make_padded_wav(scene, raw, padded, lead_in_sec=lead)
         padded_wavs.append(padded)
-        info(f"  [{scene.id}] raw={actual_raw:.2f}s -> scene.duration={scene.duration}s padded")
-    if sync_adjustments:
-        info(f"  [auto-sync] {len(sync_adjustments)} scene literal 自動上書き (overflow 防御):")
-        for sid, old, new in sync_adjustments:
-            info(f"    {sid}: {old}s -> {new}s")
+        info(f"  [{scene.id}] lead={lead:.2f}s + raw={scene.raw_duration:.2f}s + trail={TRAIL_OUT_SEC}s = scene.duration={scene.duration}s")
 
     narration_wav = TEMP_DIR / "narration_full.wav"
     concat_narration(padded_wavs, narration_wav)
     total_audio = ffprobe_duration(narration_wav)
-    info(f"  narration 結合完了: {narration_wav.name} = {total_audio:.2f}s")
+    info(f"  narration 結合完了: {narration_wav.name} = {total_audio:.2f}s (video {video_dur:.2f}s と 同期想定)")
 
-    if narration_only:
-        listen_path = OUTPUT_DIR / "narration_only_preview.wav"
-        shutil.copy(narration_wav, listen_path)
-        info(f"\n=== --narration-only Done ===")
-        info(f"  試聴用 WAV: {listen_path.relative_to(BASE_DIR)} ({total_audio:.2f}s)")
-        info(f"  個別 scene WAV: {TEMP_DIR.relative_to(BASE_DIR)}/S*_raw.wav")
-        return 0
-
-    info(f"\n[2/3] Playwright で demo flow 録画 (target total = {sum(s.duration for s in SCENES):.1f}s)")
-    webm = record_demo()
-    video_dur = ffprobe_duration(webm)
-    info(f"  WebM: {webm.name} = {video_dur:.2f}s")
-
-    info("\n[3/3] ffmpeg で MP4 最終合成 + 末尾クレジット overlay")
+    info("\n[4/4] ffmpeg で MP4 最終合成 + 末尾クレジット overlay + SRT burn-in")
     out_mp4 = OUTPUT_DIR / "mais_deal_matching_demo.mp4"
     compose_final(webm, narration_wav, out_mp4)
     final_dur = ffprobe_duration(out_mp4)
