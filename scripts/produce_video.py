@@ -37,7 +37,7 @@ import requests
 BASE_DIR = Path(__file__).parent.parent
 OUTPUT_DIR = BASE_DIR / "out_video"
 TEMP_DIR = OUTPUT_DIR / "_temp"
-UVICORN_URL = "http://127.0.0.1:8000"
+UVICORN_URL = "http://127.0.0.1:8001"
 ENGINE_URL = "http://127.0.0.1:10101"  # AivisSpeech-Engine standalone
 SPEAKER_ID = int(os.environ.get("SPEAKER_ID", "888753763"))  # まお おちついた (cross-PJ 統一)
 
