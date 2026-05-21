@@ -280,6 +280,19 @@ This repo is a PoC. For real PII / production:
 
 ---
 
+## Design history (ADR set)
+
+Architecture decisions for this repo are recorded under [`docs/adr/`](docs/adr/) using the Nygard pattern (Context / Decision / Alternatives considered / Consequences / References). The four load-bearing decisions are:
+
+- [ADR-0001 — Stack choice (Python 3.11+ + FastAPI + Pydantic v2 + sentence-transformers + Presidio)](docs/adr/0001-stack-choice.md)
+- [ADR-0002 — LLMProvider Protocol 3-tier swap (Mock / Ollama-local / paid API)](docs/adr/0002-llm-provider-protocol-3tier-swap.md)
+- [ADR-0003 — Vault Pattern: Fernet PoC with SQLCipher / KMS production swap path (2026 APPI compliance shape)](docs/adr/0003-vault-pattern-fernet-with-sqlcipher-kms-swap.md)
+- [ADR-0004 — Five-stage hybrid retrieval tuned for Japanese sparse + dense complementarity](docs/adr/0004-five-stage-hybrid-retrieval-jp-tuning.md)
+
+Each ADR records the alternatives considered (with pros / cons) and the consequences (positive + negative + reversibility), so the design path is replayable end-to-end.
+
+---
+
 ## Sibling tools (M&A Intelligence Suite)
 
 - **[mais-deal-matching](https://github.com/leagames0221-sys/mais-deal-matching)** ← this repo (sourcing)
