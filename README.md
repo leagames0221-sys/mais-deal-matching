@@ -151,16 +151,46 @@ uvicorn src.api.app:app --reload --port 8000
 
 ## Configuration (env)
 
+The matching engine ships with a **3-tier LLM swap path** for Stage 5 (listwise CoT rerank). Pick the tier that matches your environment — no env edits are needed for tier 1 (PoC default).
+
+### Tier 1 — PoC default (zero cost, zero credit card, runs offline)
+
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...           # required from Stage 5 onward
+# No LLM env vars required. MockProvider is the default; Stage 5 emits deterministic
+# (fit_label, reasoning) tuples respecting the cross-encoder order, so the full
+# 5-stage pipeline + vault + audit log all work without any external API call.
 SYNTHETIC_SEED=20260512                 # reproducibility
 SYNTHETIC_PROFILE_COUNT=1000            # 1,000 in PoC; scale up for production
 SYNTHETIC_COMPANY_COUNT=200
 EMBEDDING_MODEL=intfloat/multilingual-e5-large
 DATA_DIR=./data
-VAULT_KEY=<fernet key>
-SESSION_SECRET=<token_urlsafe>
+VAULT_KEY=<fernet key>                  # always required
+SESSION_SECRET=<token_urlsafe>          # always required
 ```
+
+### Tier 2 — Local LLM swap (still zero cost, zero credit card; uses your own GPU/CPU)
+
+For developers / customers who want real LLM listwise rerank without paid APIs. Requires [Ollama](https://ollama.com/) running locally with a model pulled (e.g. `ollama pull qwen2.5:7b`).
+
+```bash
+LLM_PROVIDER=ollama                     # switches default_provider() to Ollama (1-file swap point: src/matching/llm_provider.py)
+OLLAMA_BASE_URL=http://localhost:11434  # Ollama default
+OLLAMA_MODEL=qwen2.5:7b                 # any local model the listwise prompt format supports
+# ... plus the always-required vars from tier 1
+```
+
+### Tier 3 — Customer / production swap (paid API; the only tier that touches credit-card-backed services)
+
+For customer deployments where higher rerank quality or hosted-model SLA is required. **This is the only place credit-card-backed services enter the system** — paste the customer's key here and nothing else changes.
+
+```bash
+LLM_PROVIDER=claude                     # or "gemini" / future provider
+ANTHROPIC_API_KEY=sk-ant-...            # paste customer's key here (tier 1 + tier 2 never read this var)
+ANTHROPIC_MODEL=claude-sonnet-4-6       # whichever model the engagement contract specifies
+# ... plus the always-required vars from tier 1
+```
+
+The swap point is literally one function — `default_provider()` in `src/matching/llm_provider.py` (currently MockProvider; Week 3b adds Claude/Ollama provider classes per `requirements-week3.txt` L2). Stage 1-4 (BM25 + dense + RRF + cross-encoder) never depend on Stage 5, so even if the LLM tier is offline the top-5 candidates ship.
 
 ---
 
