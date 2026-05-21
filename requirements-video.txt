@@ -1,0 +1,28 @@
+# 動画自動制作 pipeline 用 deps (scripts/produce_video.py)
+# user audit + OK 取得済 (2026-05-12)、 全 ★★★ green flag
+
+# Week 4 base (vault + uvicorn 動作必要)
+faker>=25.0,<26.0
+python-dotenv>=1.0,<2.0
+pytest>=9.0.3,<10.0
+sentence-transformers>=5.4,<6.0
+transformers>=5.0,<6.0          # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
+faiss-cpu>=1.8,<2.0
+numpy>=1.26,<3.0
+rank_bm25>=0.2,<1.0
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+pydantic>=2.0,<3.0
+jinja2>=3.1,<4.0
+python-multipart>=0.0.9,<1.0
+itsdangerous>=2.0,<3.0
+httpx>=0.27,<1.0
+cryptography>=46.0.6,<47.0
+
+# ─── 動画 pipeline 専用 ─────
+# Microsoft Playwright (Apache-2.0、 10M+ DL/月、 公式 Chromium 経由で video record built-in)
+# user audit: post-install hook で chromium binary DL (要 `playwright install chromium`)、 公式 microsoft.com 経由 ★★★ green
+playwright>=1.40,<2.0
+
+# requests は VOICEVOX HTTP API 呼出用 (公式 PSF、 既 sentence-transformers の transitive で install 済 version range と整合)
+requests>=2.31,<3.0

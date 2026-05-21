@@ -27,6 +27,18 @@ This repo specifically demonstrates: 2026-amended APPI vault pattern (Fernet AES
 
 ---
 
+## 🎬 Demo walkthrough (85-second narrated video)
+
+End-to-end demo of both sides of the matching engine — successor candidate flow (mypage → vault decrypt → matching → introduction request → audit log) → company flow (signin → candidate matching → introduction request → audit log). Japanese narration by [AivisSpeech](https://aivis-project.com/) (まお おちついた, Style-Bert-VITS2), 1920×1080 H.264.
+
+> [▶️ **mais_deal_matching_demo.mp4**](out_video/mais_deal_matching_demo.mp4) — 84.96 s · 6.5 MB · 14 scenes with burned-in SRT subtitles.
+
+<video src="out_video/mais_deal_matching_demo.mp4" controls width="100%"></video>
+
+**Reproducible pipeline** ([scripts/produce_video.py](scripts/produce_video.py), [requirements-video.txt](requirements-video.txt)) — 1-command rebuild given preconditions (uvicorn + [AivisSpeech-Engine 1.2.0](https://github.com/Aivis-Project/AivisSpeech-Engine) on `:10101` + [Playwright](https://playwright.dev/) chromium + [ffmpeg](https://ffmpeg.org/)). All synthetic data, zero real PII, zero paid API.
+
+---
+
 ## 30-second pitch
 
 Japanese mid-market M&A intermediaries handle hundreds of thousands of candidate-side and buy-side records. Naive matching tools either (a) leak PII to embedding models, or (b) drop accuracy by stripping context.
