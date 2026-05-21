@@ -49,6 +49,19 @@ Japanese mid-market M&A intermediaries handle hundreds of thousands of candidate
 
 ---
 
+## Why this is distinct (existing alternatives + delta)
+
+Two adjacent tool categories address Japanese M&A deal matching in 2026, but neither combines retrieval-quality discipline with the 2026 amended APPI vault pattern:
+
+- **Japanese mid-market M&A matching platforms** (Batonz / TRANBI / M&A Capital Partners JP) — operate the candidate-buyer marketplace but treat matching as a recruiter-tier human task; AI retrieval is opaque and PII handling is the platform's compliance responsibility, not exposed as a swap-able vault pattern.
+- **Generic CRM / matching engines** (HubSpot / Salesforce / DealRoom CRM) — manage deal pipeline + metadata but do not implement Japanese-language sparse + dense complementarity (BM25 + dense + RRF) nor the 2026 APPI encrypted-pseudonymized exemption pattern in a vault swap surface.
+
+MAIS Deal Matching is the only OSS demonstrating: 5-stage hybrid retrieval tuned for Japanese-language sparse+dense complementarity (Stages 1-4 LLM-free) layered with the 2026 APPI vault pattern (Fernet PoC, SQLCipher/KMS swap path literal in `src/vault/store.py`).
+
+**Target user**: Japanese mid-market M&A intermediary firms (handling 10²-10⁵ candidate + buyer records) needing audit-grade PII handling + Japanese-language retrieval quality without enterprise-tier licensing.
+
+---
+
 ## Architecture
 
 ```
@@ -240,6 +253,18 @@ This is a **PoC portfolio** demonstrating shape + interfaces. The architecture a
 - **Real OAuth + Bot Framework** — Google / LinkedIn provider hooks are mocked; real OAuth wiring deferred to integration phase.
 
 **Rationale**: this scoping lets the repo demonstrate end-to-end shape, the 2026 APPI vault pattern, and the 4-stage retrieval pipeline on a laptop without paid API keys. The Protocol-abstracted LLM swap and the documented vault migration path are themselves the portfolio claim — adding real Claude / SQLCipher does not require refactoring callers.
+
+---
+
+## What this exercise validated
+
+Three things turned out to be worth defending in this PoC.
+
+**First, the vault swap path is the compliance claim, not the Fernet choice itself.** The repo ships a working Fernet AES-128-CBC + HMAC-SHA256 vault over JSONL files for the PoC, but the production-equivalent SQLCipher / PostgreSQL + KMS swap path is literal in `src/vault/store.py`. Callers under `src/matching/` never read PII directly — they read pseudonymized fields through the vault interface — so wiring a real KMS-backed store changes one module, zero callers. The 2026 amended APPI encrypted-pseudonymized exemption is the structural reason this matters; the Protocol abstraction is the architectural commitment that makes the exemption actually portable to a customer engagement.
+
+**Second, retrieval quality is tuned for Japanese mid-market language specifics.** The 5-stage pipeline (BM25 → dense → RRF → cross-encoder → LLM listwise CoT) is shaped for the sparse + dense complementarity that Japanese business writing exhibits more strongly than English-only corpora — short kanji-heavy company-name strings reward BM25, long context paragraphs reward dense, and RRF fusion captures both signals without either side dominating. Stages 1-4 run without any LLM, so the deterministic part of the matching surface is reproducible from a clean checkout against the synthetic fixture corpus.
+
+**Third, the PoC stops where the maintained alternatives start.** Batonz / TRANBI / M&A Capital Partners JP remain the right call for buyers and candidates actively transacting in the Japanese mid-market marketplace. HubSpot / Salesforce / DealRoom CRM remain the right call for pipeline + metadata management. What MAIS Deal Matching adds is the open, auditable retrieval+vault pattern that an intermediary firm can deploy themselves under their own audit perimeter — wired and tested at 49/50 pytest cases against synthetic deal data, runnable on a consumer laptop with zero monthly cost. The PoC status section above is explicit about which integration points (LLM stage 5, vault migration, OAuth providers) are live versus deferred.
 
 ---
 
