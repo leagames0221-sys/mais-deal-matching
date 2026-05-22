@@ -13,7 +13,7 @@ transformers>=5.0,<6.0 # Standard Pin、 sentence-transformers transitive で 4.
 # in-memory similarity search、 数十万件まで host PC で扱える
 faiss-cpu>=1.8,<2.0
 # 数値計算
-numpy>=1.26,<3.0
+numpy>=2.4.6,<3.0
 
 # ─── Week 3: matching engine ─────
 anthropic>=0.40,<1.0
