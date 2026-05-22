@@ -17,7 +17,7 @@ fastapi>=0.115,<1.0
 uvicorn[standard]>=0.30,<1.0
 pydantic>=2.0,<3.0
 jinja2>=3.1,<4.0
-python-multipart>=0.0.9,<1.0
+python-multipart>=0.0.29,<1.0
 itsdangerous>=2.0,<3.0
 # FastAPI TestClient が要求 (starlette transitive)、 既存 sentence-transformers の transitive で
 # install 済の version range と整合
