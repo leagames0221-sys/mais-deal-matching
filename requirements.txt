@@ -29,7 +29,7 @@ itsdangerous>=2.0,<3.0
 httpx>=0.27,<1.0
 rank_bm25>=0.2,<1.0
 # vault encryption at rest、 46.0.6+ pin for CVE-2026-26007 (HIGH) + CVE-2026-34073 (LOW)
-cryptography>=46.0.6,<47.0
+cryptography>=48.0.0,<49.0
 
 # ─── dev ─────
 pytest>=9.0.3,<10.0 # CVE-2025-71176 fix (8.x not backported)
