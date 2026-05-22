@@ -13,4 +13,4 @@ pytest>=9.0.3,<10.0 # CVE-2025-71176 fix
 sentence-transformers>=5.4,<6.0
 transformers>=5.0,<6.0 # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
 faiss-cpu>=1.8,<2.0
-numpy>=1.26,<3.0
+numpy>=2.4.6,<3.0

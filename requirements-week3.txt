@@ -8,7 +8,7 @@ pytest>=9.0.3,<10.0
 sentence-transformers>=5.4,<6.0
 transformers>=5.0,<6.0 # Standard Pin (cross-PJ template inherit、 CVE-2026-1839 fix 込み)
 faiss-cpu>=1.8,<2.0
-numpy>=1.26,<3.0
+numpy>=2.4.6,<3.0
 
 # Week 3a: Stage 1 BM25 (sparse lexical retrieval)
 # - rank_bm25: dorianbrown/rank_BM25、 Apache-2.0、 600+ stars、 pure Python (CVE 安全)
